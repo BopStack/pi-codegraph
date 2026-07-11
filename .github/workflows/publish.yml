@@ -1,0 +1,62 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - v*
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Dry run (no publish)
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.3.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+
+  publish:
+    needs: quality
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.3.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Validate tag version matches package.json
+        if: github.event_name == 'push'
+        run: |
+          TAG_VERSION="v$(node -p "require('./package.json').version")"
+          if [ "$TAG_VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package version $TAG_VERSION"
+            exit 1
+          fi
+
+      - name: Publish (dry run)
+        if: github.event_name == 'workflow_dispatch'
+        run: npm publish --dry-run --access public
+
+      - name: Publish (provenance)
+        if: github.event_name == 'push'
+        run: pnpm publish --provenance --access public
