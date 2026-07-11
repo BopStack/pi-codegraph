@@ -1,19 +1,53 @@
-# pi-codegraph
+# @bopstack/pi-codegraph
 
-Semantic code understanding for Pi via [CodeGraph](https://github.com/colbymchenry/codegraph) — a single `codegraph` tool with action-first usage. No slash command. No JSON wrapping. Text-first output.
+[![npm](https://img.shields.io/npm/v/@bopstack/pi-codegraph)](https://www.npmjs.com/package/@bopstack/pi-codegraph)
+[![CI](https://github.com/bopstack/pi-codegraph/actions/workflows/ci.yml/badge.svg)](https://github.com/bopstack/pi-codegraph/actions/workflows/ci.yml)
 
-Works with both Pi and Oh My Pi (OMP). Package installs expose both `pi.extensions` and `omp.extensions`; load explicitly with `pi -e packages/pi-codegraph/src/index.ts` or `omp -e packages/pi-codegraph/src/index.ts`.
+Semantic code understanding for [Pi](https://github.com/earendil-works/pi-coding-agent) and [Oh My Pi](https://github.com/earendil-works/omp) via [CodeGraph](https://github.com/colbymchenry/codegraph) — a single `codegraph` tool with action-first usage. No slash command. No JSON wrapping. Text-first output.
+
+Package installs expose both `pi.extensions` and `omp.extensions`; load explicitly with `pi -e .` or `omp -e .`.
+
+## Install
+
+```bash
+# Install the extension
+pi install npm:@bopstack/pi-codegraph
+
+# Or with npm directly
+npm install @bopstack/pi-codegraph
+```
 
 ## Quick start
 
 ```bash
-# Install the CLI (once per machine)
+# Install the CodeGraph CLI (once per machine)
 npm install -g @colbymchenry/codegraph
 
 # Initialize and index your project
 codegraph init
 codegraph index
 ```
+
+## Local development
+
+```bash
+git clone https://github.com/bopstack/pi-codegraph.git
+cd pi-codegraph
+pnpm install
+
+# Load the extension from source
+pi -e .
+# or
+omp -e .
+
+# Quality gates
+pnpm check     # biome check + typecheck + tests
+pnpm test       # vitest run (170 tests, 8 suites)
+pnpm typecheck  # tsc --noEmit
+pnpm lint       # biome lint
+```
+
+Requires Node.js >= 22.19.0 and pnpm >= 11.3.0. The CodeGraph CLI must be on `PATH` for live integration checks.
 
 ## Usage
 
@@ -76,3 +110,7 @@ Destructive, interactive, install, and package-management actions are out of sco
 ## No slash command
 
 This extension does not register a `/codegraph` command. Use the `codegraph` tool with an `action` field instead.
+
+## License
+
+[MIT](./LICENSE) — Copyright (c) 2026 Bopstack
