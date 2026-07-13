@@ -39,11 +39,3 @@ Use **pnpm 11.3.0** with Node.js >= 22.19.0.
 | Action usage | `README.md` |
 | API contract | `src/descriptors.ts` |
 | Unsupported actions | `src/unsupported.ts` |
-
-## Commit Attribution
-
-AI commits MUST include:
-
-```
-Co-Authored-By: (the agent's name and attribution byline)
-```

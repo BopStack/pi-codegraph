@@ -1,116 +1,219 @@
+<div align="center">
+
 # @bopstack/pi-codegraph
 
-[![npm](https://img.shields.io/npm/v/@bopstack/pi-codegraph)](https://www.npmjs.com/package/@bopstack/pi-codegraph)
-[![CI](https://github.com/bopstack/pi-codegraph/actions/workflows/ci.yml/badge.svg)](https://github.com/bopstack/pi-codegraph/actions/workflows/ci.yml)
+**CodeGraph-powered code intelligence for [Pi](https://github.com/earendil-works/pi-coding-agent) and [Oh My Pi](https://github.com/earendil-works/omp).**
 
-Semantic code understanding for [Pi](https://github.com/earendil-works/pi-coding-agent) and [Oh My Pi](https://github.com/earendil-works/omp) via [CodeGraph](https://github.com/colbymchenry/codegraph) — a single `codegraph` tool with action-first usage. No slash command. No JSON wrapping. Text-first output.
+[![CI](https://github.com/bopstack/pi-codegraph/actions/workflows/ci.yml/badge.svg?style=flat-square)](https://github.com/bopstack/pi-codegraph/actions/workflows/ci.yml)
+![Node.js](https://img.shields.io/badge/node-%3E%3D22.19.0-3c873a?style=flat-square&logo=nodedotjs&logoColor=white)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-Package installs expose both `pi.extensions` and `omp.extensions`; load explicitly with `pi -e .` or `omp -e .`.
+[Get started](#get-started) · [Actions](#actions) · [Workflows](#workflows) · [Development](#development)
 
-## Install
+</div>
 
-```bash
-# Install the extension
-pi install npm:@bopstack/pi-codegraph
+`@bopstack/pi-codegraph` adds one action-first `codegraph` tool to Pi and Oh My Pi. It lets an agent explore an indexed codebase, read exact source, trace dependencies, estimate impact, identify affected tests, and maintain the local CodeGraph index—without a slash command or JSON-wrapped output.
 
-# Or with npm directly
-npm install @bopstack/pi-codegraph
-```
+Calls are rendered as their equivalent CodeGraph CLI command, while results remain plain text for direct use in an agent session.
 
-## Quick start
+## Highlights
 
-```bash
-# Install the CodeGraph CLI (once per machine)
-npm install -g @colbymchenry/codegraph
+- **One focused tool.** Every capability is selected with a required `action` field.
+- **Code-aware investigation.** Explore architecture, inspect symbols or files, browse indexed files, and search for names.
+- **Change planning support.** Trace callers and callees, estimate symbol impact, and find likely affected tests.
+- **Local index maintenance.** Check status, initialize, refresh, fully rebuild, or unlock an index when needed.
+- **Safe agent boundary.** Destructive, interactive, package-management, and other setup/admin commands stay out of the tool.
+- **Readable large results.** ANSI sequences are removed; output over 50 KiB or 3,000 lines is truncated with a path to its complete temporary file.
 
-# Initialize and index your project
-codegraph init
-codegraph index
-```
+## Requirements
 
-## Local development
+- [Pi](https://github.com/earendil-works/pi-coding-agent) or [Oh My Pi](https://github.com/earendil-works/omp)
+- [CodeGraph](https://github.com/colbymchenry/codegraph) CLI on `PATH` wherever the tool runs
+- Node.js **22.19.0+** and pnpm **11.3.0+** when developing this package
+
+## Get started
+
+### Load from a checkout
 
 ```bash
 git clone https://github.com/bopstack/pi-codegraph.git
 cd pi-codegraph
 pnpm install
 
-# Load the extension from source
+# Load the extension from this checkout.
 pi -e .
 # or
 omp -e .
-
-# Quality gates
-pnpm check     # biome check + typecheck + tests
-pnpm test       # vitest run (170 tests, 8 suites)
-pnpm typecheck  # tsc --noEmit
-pnpm lint       # biome lint
 ```
 
-Requires Node.js >= 22.19.0 and pnpm >= 11.3.0. The CodeGraph CLI must be on `PATH` for live integration checks.
+The package declares extension entrypoints for both Pi and Oh My Pi.
 
-## Usage
+### Install and initialize CodeGraph
 
-One tool: `codegraph`. Every call requires an `action` field:
+```bash
+# Once per machine
+npm install -g @colbymchenry/codegraph
+
+# In each project you want to inspect
+cd /path/to/project
+codegraph init
+```
+
+> [!NOTE]
+> `codegraph init` creates the local CodeGraph state and builds the initial index. Use `codegraph status` to confirm that an existing index is healthy, `codegraph sync` after edits, and `codegraph index` when a full rebuild is required.
+
+### Verify the setup
+
+First, verify the local CLI:
+
+```bash
+codegraph status
+```
+
+Then, in Pi or Oh My Pi, ask the registered tool about the same project:
 
 ```ts
-codegraph({ action: "explore", query: "auth session", max_files: 8 })
+codegraph({ action: "status" })
 ```
 
-Pi renders calls as their implied CLI command:
+## Use the tool
+
+Every call requires `action`. Parameters are ordinary tool fields—do not wrap them in a JSON string.
+
+```ts
+codegraph({
+  action: "explore",
+  query: "How is authentication established and propagated?",
+  max_files: 8,
+})
+```
+
+Pi and Oh My Pi render that call in CLI form:
 
 ```text
-codegraph explore "auth session" --max-files 8
+codegraph explore "How is authentication established and propagated?" --max-files 8
 ```
 
-Output is always plain text — no JSON envelope, no structured wrapping. Large results are truncated with a path to the full output.
+> [!TIP]
+> Start unfamiliar-code and edit-preparation questions with `explore`. It returns relevant source and call paths in one result; follow with `node` when you need exact source and line numbers.
 
-## Supported actions
+### Action contract
 
-### Read & explore
+- `action` is mandatory for every call.
+- `node` needs at least one of `file` or `symbol`; when both are present, `file` identifies the target.
+- `search` maps to the CLI command `codegraph query`; `help` is generated by the extension; the remaining supported actions map directly to CodeGraph CLI commands.
+- `project_path` selects a project for applicable actions. It maps to `--path` for graph-query actions and to the CLI's positional path for `status` and index-maintenance actions.
+- Use `help` for the full generated reference, including required and optional fields for every action.
 
-| Action | Purpose | Short example |
-|--------|---------|---------------|
-| `explore` | Natural-language question or symbol survey | `codegraph({ action: "explore", query: "how does auth work" })` |
-| `node` | Exact symbol or file with line numbers and dependents | `codegraph({ action: "node", file: "src/index.ts", limit: 120 })` |
-| `search` | Discover symbol names by keyword | `codegraph({ action: "search", query: "login", kind: "function" })` |
-| `files` | Browse indexed project file structure | `codegraph({ action: "files", filter: "*.ts", max_depth: 3 })` |
+## Actions
 
-### Dependency & impact analysis
+### Explore and read
 
-| Action | Purpose | Short example |
-|--------|---------|---------------|
-| `callers` | Who calls a symbol (incoming) | `codegraph({ action: "callers", symbol: "authenticate" })` |
-| `callees` | What a symbol calls (outgoing) | `codegraph({ action: "callees", symbol: "authenticate" })` |
-| `impact` | Blast-radius estimation for a symbol | `codegraph({ action: "impact", symbol: "config", depth: 3 })` |
-| `affected` | Tests affected by changed files | `codegraph({ action: "affected", files: ["src/auth.ts"], depth: 2 })` |
+| Action | Required fields | Use it to |
+|---|---|---|
+| `explore` | `query` | Answer an architecture, behavior, bug-investigation, or edit-preparation question with relevant source and call paths. |
+| `node` | `file` or `symbol` | Read an exact file or symbol with line numbers; supports `offset`, `limit`, and `symbols_only`. |
+| `search` | `query` | Discover symbol names by text, natural-language query, or `kind`. |
+| `files` | — | Browse the indexed file structure; supports `filter`, `pattern`, `format`, `max_depth`, and `no_metadata`. |
+| `status` | — | Check index health and statistics before relying on an unfamiliar, missing, or stale index. |
 
-### Index maintenance
+### Trace change impact
 
-| Action | Purpose | Short example |
-|--------|---------|---------------|
-| `status` | Index health and stats | `codegraph({ action: "status" })` |
-| `sync` | Incremental refresh after file changes | `codegraph({ action: "sync" })` |
-| `index` | Full re-index | `codegraph({ action: "index", project_path: "." })` |
-| `init` | Initialize index in a new project | `codegraph({ action: "init", project_path: "." })` |
-| `unlock` | Clear a stale index lock | `codegraph({ action: "unlock", project_path: "." })` |
+| Action | Required fields | Use it to |
+|---|---|---|
+| `callers` | `symbol` | Find incoming dependencies: functions or methods that call a symbol. |
+| `callees` | `symbol` | Find outgoing dependencies: functions or methods called by a symbol. |
+| `impact` | `symbol` | Estimate the blast radius of a symbol; supports traversal `depth`. |
+| `affected` | `files` | Identify likely affected test files after a change; accepts changed paths and optional `depth` or `filter`. |
 
-### Meta
+### Maintain the local index
 
-| Action | Purpose | Short example |
-|--------|---------|---------------|
-| `help` | Full action reference with decision tree | `codegraph({ action: "help" })` |
+| Action | Required fields | Use it to |
+|---|---|---|
+| `init` | `project_path` | Initialize a project and build its initial index. |
+| `index` | `project_path` | Perform a full re-index of a project. |
+| `sync` | — | Incrementally refresh the index after file changes. |
+| `unlock` | — | Clear a stale CodeGraph index lock. |
+| `help` | — | Show the generated decision tree, complete action reference, examples, and safe alternatives. |
 
-## Unsupported actions
+## Workflows
 
-Destructive, interactive, install, and package-management actions are out of scope. The tool returns boundary text with a safe human CLI alternative for each:
+### Understand an unfamiliar area
 
-`uninit`, `uninstall`, `daemon`, `daemons`, `install`, `install_config`, `telemetry`, `upgrade`, `upgrade_check`, `version`
+```ts
+codegraph({ action: "status" })
+codegraph({ action: "explore", query: "Where is a user session created?" })
+codegraph({ action: "node", symbol: "create_session" })
+```
 
-## No slash command
+### Prepare a focused change
 
-This extension does not register a `/codegraph` command. Use the `codegraph` tool with an `action` field instead.
+```ts
+codegraph({ action: "search", query: "create_session", kind: "function" })
+codegraph({ action: "callers", symbol: "create_session" })
+codegraph({ action: "callees", symbol: "create_session" })
+codegraph({ action: "impact", symbol: "create_session", depth: 2 })
+```
 
-## License
+### Find tests after editing
 
-[MIT](./LICENSE) — Copyright (c) 2026 Bopstack
+```ts
+codegraph({ action: "sync" })
+codegraph({ action: "affected", files: ["src/session.ts"], depth: 2 })
+```
+
+## Safety and output behavior
+
+The tool runs CodeGraph without shell interpolation and returns text rather than a JSON envelope. It strips terminal control sequences and preserves the full output in a temporary file when the agent-facing result exceeds its display limit.
+
+> [!IMPORTANT]
+> `init`, `index`, and `unlock` are caution actions because they operate on local index state. Forced `init` or `index` requests are blocked for the home directory, filesystem root, and Windows drive roots. Use `force` only for an explicit project directory when a full re-index is required.
+
+These CodeGraph commands are intentionally unsupported through the agent tool: `uninit`, `uninstall`, `daemon`, `daemons`, `install`, `install_config`, `telemetry`, `upgrade`, `upgrade_check`, and `version`. For each, the tool returns a reason and a safe CLI alternative for a human operator.
+
+### Troubleshooting
+
+| Symptom | Resolution |
+|---|---|
+| `CodeGraph CLI is unavailable on PATH` | Install it with `npm install -g @colbymchenry/codegraph`, then ensure the global npm bin directory is on `PATH`. |
+| The index is missing or unexpectedly empty | Run `codegraph({ action: "status" })`; initialize the target project with `codegraph({ action: "init", project_path: "." })`. |
+| Results may be stale after edits | Run `codegraph({ action: "sync" })`; use `index` for a full rebuild. |
+| CodeGraph reports a stale lock | Run `codegraph({ action: "unlock", project_path: "." })` only after confirming the lock is stale. |
+| An action or field is unclear | Run `codegraph({ action: "help" })` for the generated action reference and decision tree. |
+
+## Development
+
+```bash
+git clone https://github.com/bopstack/pi-codegraph.git
+cd pi-codegraph
+pnpm install
+
+# Load the extension from this checkout.
+pi -e .
+# or
+omp -e .
+```
+
+### Quality checks
+
+```bash
+pnpm check      # Biome check, TypeScript typecheck, and Vitest
+pnpm test       # Vitest test suite
+pnpm typecheck  # tsc --noEmit
+pnpm lint       # Biome lint
+```
+
+CI runs `pnpm check` and verifies the publishable package with `npm pack --dry-run`.
+
+### Project layout
+
+```text
+src/
+├── index.ts        Extension registration and tool schema
+├── descriptors.ts  Action metadata and CLI argument mapping
+├── router.ts       Validation, dispatch, and force guard
+├── run.ts          Streaming CodeGraph CLI execution
+├── output.ts       Text formatting and truncation
+├── help.ts         Generated action reference
+└── *.test.ts       Colocated Vitest coverage
+```
