@@ -5,6 +5,7 @@
 **CodeGraph-powered code intelligence for [Pi](https://github.com/earendil-works/pi-coding-agent) and [Oh My Pi](https://github.com/earendil-works/omp).**
 
 [![CI](https://github.com/bopstack/pi-codegraph/actions/workflows/ci.yml/badge.svg?style=flat-square)](https://github.com/bopstack/pi-codegraph/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@bopstack/pi-codegraph?style=flat-square)](https://www.npmjs.com/package/@bopstack/pi-codegraph)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D22.19.0-3c873a?style=flat-square&logo=nodedotjs&logoColor=white)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
@@ -33,7 +34,19 @@ Calls are rendered as their equivalent CodeGraph CLI command, while results rema
 
 ## Get started
 
-### Load from a checkout
+### Install from npm
+
+```bash
+# Pi
+pi install npm:@bopstack/pi-codegraph
+
+# Oh My Pi
+omp install @bopstack/pi-codegraph
+```
+
+The package registers `src/index.ts` as an extension for both hosts.
+
+### Develop from a checkout
 
 ```bash
 git clone https://github.com/bopstack/pi-codegraph.git
