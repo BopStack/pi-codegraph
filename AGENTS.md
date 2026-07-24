@@ -39,3 +39,21 @@ Use **pnpm 11.3.0** with Node.js >= 22.19.0.
 | Action usage | `README.md` |
 | API contract | `src/descriptors.ts` |
 | Unsupported actions | `src/unsupported.ts` |
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs are tracked in GitHub Issues via `gh`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the default five canonical triage labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Use a single-context layout with root `CONTEXT.md` and `docs/adr/`. See `docs/agents/domain.md`.
+
+### Code standards
+
+Implementation and code review must load the `tdd`, `typescript-best-practices`, and `riteway-test-naming` skills. See `docs/agents/code-standars.md`.
