@@ -11,7 +11,6 @@ import { format_output, strip_ansi } from "./output";
 
 describe("strip_ansi", () => {
 	test("given ANSI SGR sequences: should remove color codes while preserving text", () => {
-		// biome-ignore lint/security/noSecrets: test fixture with ANSI escape codes
 		const ansi = "\x1b[31mred\x1b[0m \x1b[1;32mbold green\x1b[0m";
 		expect(strip_ansi(ansi)).toBe("red bold green");
 	});
@@ -65,7 +64,6 @@ describe("format_output", () => {
 	});
 
 	test("given output with ANSI sequences: should strip them", () => {
-		// biome-ignore lint/security/noSecrets: test fixture with ANSI escape codes
 		const ansi_input = "\x1b[32mok\x1b[0m";
 		const result = format_output(
 			{ stdout_head: ansi_input, stderr: "", exit_code: 0, temp_file_path: "" },
@@ -132,7 +130,6 @@ describe("format_output", () => {
 
 	test("given multi-byte UTF-8 near truncation boundary: should truncate on character boundary", () => {
 		const prefix = "a".repeat(51_000);
-		// biome-ignore lint/security/noSecrets: test fixture with Japanese text
 		const suffix = "日本語のテキスト".repeat(50);
 		const big_utf8 = `${prefix}\n${suffix}`;
 
