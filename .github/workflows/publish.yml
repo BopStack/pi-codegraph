@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: Dry run (no publish)
+        description: Dry run (preview package contents)
         required: false
         type: boolean
         default: true
@@ -27,7 +27,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
 
-  publish:
+  stage:
+    if: github.event_name == 'push' || github.ref == 'refs/heads/main' || inputs.dry_run
     needs: quality
     runs-on: ubuntu-latest
     permissions:
@@ -35,14 +36,11 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
         with:
-          version: 11.3.0
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22.19.0
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
 
       - name: Validate tag version matches package.json
         if: github.event_name == 'push'
@@ -53,24 +51,14 @@ jobs:
             exit 1
           fi
 
-      - name: Publish (dry run)
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'true'
-        run: pnpm publish --dry-run --access public
+      - name: Preview package contents
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run
+        run: npm pack --dry-run
 
-      - name: Publish (workflow_dispatch live)
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'false'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          pnpm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
-          pnpm publish --access public --no-git-checks
+      - name: Install npm CLI with staged publishing support
+        if: github.event_name == 'push' || !inputs.dry_run
+        run: npm install --global npm@11.21.3
 
-      - name: Publish (push tag)
-        if: github.event_name == 'push'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          pnpm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
-          pnpm publish --access public --no-git-checks
+      - name: Stage release for maintainer approval
+        if: github.event_name == 'push' || !inputs.dry_run
+        run: npm stage publish --access public
