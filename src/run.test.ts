@@ -7,6 +7,8 @@
 
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { run_codegraph } from "./run";
 
@@ -65,25 +67,43 @@ describe_if_cli("run_codegraph streaming runner", () => {
 
 describe_if_cli("run_codegraph: large output capture", () => {
 	test("given codegraph with large output action: should capture full output to temp file without 2 MiB cap", async () => {
-		const result = await run_codegraph(["files"], process.cwd());
-		expect(result.exit_code).toBe(0);
+		const temp_dir = fs.mkdtempSync(join(tmpdir(), "codegraph-run-test-"));
+		try {
+			execFileSync("git", ["init", "-b", "main"], {
+				cwd: temp_dir,
+				stdio: "ignore",
+			});
+			fs.writeFileSync(
+				join(temp_dir, "index.ts"),
+				'export const test_fn = () => "ok";\n',
+			);
+			execFileSync("codegraph", ["init"], {
+				cwd: temp_dir,
+				stdio: "ignore",
+			});
 
-		expect(fs.existsSync(result.temp_file_path)).toBe(true);
+			const result = await run_codegraph(["files"], temp_dir);
+			expect(result.exit_code).toBe(0);
 
-		const temp_contents = fs.readFileSync(result.temp_file_path, "utf-8");
-		expect(temp_contents.length).toBeGreaterThan(0);
+			expect(fs.existsSync(result.temp_file_path)).toBe(true);
 
-		// In-memory head bounded (not the full output)
-		const max_head_bytes = 150_000;
-		expect(result.stdout_head.length).toBeLessThanOrEqual(max_head_bytes);
+			const temp_contents = fs.readFileSync(result.temp_file_path, "utf-8");
+			expect(temp_contents.length).toBeGreaterThan(0);
 
-		// Temp file starts with head prefix
-		expect(temp_contents.startsWith(result.stdout_head)).toBe(true);
+			// In-memory head bounded (not the full output)
+			const max_head_bytes = 150_000;
+			expect(result.stdout_head.length).toBeLessThanOrEqual(max_head_bytes);
 
-		// Temp file contains the full output (at least as much as head)
-		expect(temp_contents.length).toBeGreaterThanOrEqual(
-			result.stdout_head.length,
-		);
+			// Temp file starts with head prefix
+			expect(temp_contents.startsWith(result.stdout_head)).toBe(true);
+
+			// Temp file contains the full output (at least as much as head)
+			expect(temp_contents.length).toBeGreaterThanOrEqual(
+				result.stdout_head.length,
+			);
+		} finally {
+			fs.rmSync(temp_dir, { recursive: true, force: true });
+		}
 	}, 30_000);
 });
 
