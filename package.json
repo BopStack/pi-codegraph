@@ -69,10 +69,10 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/bopstack/pi-codegraph.git"
+		"url": "git+https://github.com/BopStack/pi-codegraph.git"
 	},
 	"bugs": {
-		"url": "https://github.com/bopstack/pi-codegraph/issues"
+		"url": "https://github.com/BopStack/pi-codegraph/issues"
 	},
-	"homepage": "https://github.com/bopstack/pi-codegraph#readme"
+	"homepage": "https://github.com/BopStack/pi-codegraph#readme"
 }
