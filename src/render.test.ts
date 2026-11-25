@@ -9,15 +9,14 @@ import type {
 	Theme,
 	ToolRenderResultOptions,
 } from "@earendil-works/pi-coding-agent";
-import { Text } from "@earendil-works/pi-tui";
 import { describe, expect, test } from "vitest";
-import { render_call, render_result } from "./render";
+import { RenderText, render_call, render_result } from "./render";
 
 type RenderContext = {
 	args: Record<string, unknown>;
 	toolCallId: string;
 	invalidate: () => void;
-	lastComponent?: Text;
+	lastComponent?: RenderText;
 	state: unknown;
 	cwd: string;
 	executionStarted: boolean;
@@ -102,7 +101,6 @@ describe("renderCall", () => {
 		const text = comp.render(120).join("");
 
 		expect(text).toContain("⟨toolTitle⟩");
-		// biome-ignore lint/security/noSecrets: mock theme role tags, not credentials
 		expect(text).toContain("⟨bold⟩codegraph⟨/bold⟩");
 		expect(text).toContain("⟨accent⟩explore⟨/accent⟩");
 	});
@@ -160,7 +158,7 @@ describe("renderCall", () => {
 		const ctx = make_ctx({ args });
 		const comp = render_call(args, mock_theme, ctx);
 
-		expect(comp).toBeInstanceOf(Text);
+		expect(comp).toBeInstanceOf(RenderText);
 		const lines = comp.render(80);
 		expect(lines.length).toBeGreaterThan(0);
 		expect(lines.join("").length).toBeGreaterThan(0);

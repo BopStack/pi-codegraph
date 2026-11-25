@@ -2,7 +2,7 @@
 
 # @bopstack/pi-codegraph
 
-**CodeGraph-powered code intelligence for [Pi](https://github.com/earendil-works/pi-coding-agent) and [Oh My Pi](https://github.com/earendil-works/omp).**
+**CodeGraph-powered code intelligence for [Pi](https://github.com/earendil-works/pi) and [Oh My Pi](https://github.com/can1357/oh-my-pi).**
 
 [![CI](https://github.com/bopstack/pi-codegraph/actions/workflows/ci.yml/badge.svg?style=flat-square)](https://github.com/bopstack/pi-codegraph/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@bopstack/pi-codegraph?style=flat-square)](https://www.npmjs.com/package/@bopstack/pi-codegraph)
@@ -28,7 +28,7 @@ Calls are rendered as their equivalent CodeGraph CLI command, while results rema
 
 ## Requirements
 
-- [Pi](https://github.com/earendil-works/pi-coding-agent) or [Oh My Pi](https://github.com/earendil-works/omp)
+- [Pi](https://github.com/earendil-works/pi) or [Oh My Pi](https://github.com/can1357/oh-my-pi)
 - [CodeGraph](https://github.com/colbymchenry/codegraph) CLI on `PATH` wherever the tool runs
 - Node.js **22.19.0+** and pnpm **11.3.0+** when developing this package
 

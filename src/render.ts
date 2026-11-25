@@ -7,34 +7,64 @@ import type {
 	Theme,
 	ToolRenderResultOptions,
 } from "@earendil-works/pi-coding-agent";
-import { Text } from "@earendil-works/pi-tui";
 import { DESCRIPTORS } from "./descriptors";
 import { UNSUPPORTED } from "./unsupported";
+
+/**
+ * Lightweight text component satisfying both Pi's `Component` interface
+ * (`render(width): string[]`, `invalidate(): void`) and Oh My Pi's `ExtensionRows`
+ * contract (`{ render(width): string[] }`).
+ *
+ * Self-contained without importing `@earendil-works/pi-tui`, ensuring clean loading
+ * in both upstream Pi and modern Oh My Pi hosts.
+ */
+export class RenderText {
+	private text: string;
+
+	constructor(text = "") {
+		this.text = text;
+	}
+
+	setText(text: string): void {
+		this.text = text;
+	}
+
+	invalidate(): void {
+		// Static text has no cached state to invalidate.
+	}
+
+	render(_width = 80): string[] {
+		if (!this.text) {
+			return [];
+		}
+		return this.text.split("\n");
+	}
+}
 
 type ToolResult = AgentToolResult<Record<string, unknown>>;
 
 type PiRenderContext = {
 	args: Record<string, unknown>;
 	invalidate: () => void;
-	lastComponent?: Text;
+	lastComponent?: RenderText;
 };
 
 const format_part = (part: string): string =>
 	part.includes(" ") ? `"${part}"` : part;
 
 /** Renders a CLI-like action preview across Pi and OMP renderer signatures. */
-export const render_call = (...all_args: unknown[]): Text => {
+export const render_call = (...all_args: unknown[]): RenderText => {
 	const args = all_args[0] as Record<string, unknown>;
 	const arg1 = all_args[1] as Record<string, unknown>;
 	const arg2 = all_args[2] as Record<string, unknown>;
 	const is_pi = typeof arg1?.fg === "function";
 	const theme = (is_pi ? arg1 : arg2) as unknown as Theme;
 	const last_component = is_pi
-		? (all_args[2] as { lastComponent?: Text } | undefined)?.lastComponent
+		? (all_args[2] as { lastComponent?: RenderText } | undefined)?.lastComponent
 		: undefined;
 	const action = typeof args.action === "string" ? args.action : "";
 	const descriptor = DESCRIPTORS[action];
-	const text = last_component ?? new Text("", 0, 0);
+	const text = last_component ?? new RenderText();
 
 	if (!descriptor) {
 		const label = action.length > 0 ? action : "(unknown)";
@@ -66,7 +96,7 @@ const extract_text = (result: ToolResult): string =>
 		.join("\n");
 
 /** Renders a tool result across Pi and OMP renderer signatures. */
-export const render_result = (...all_args: unknown[]): Text => {
+export const render_result = (...all_args: unknown[]): RenderText => {
 	const result = all_args[0] as ToolResult;
 	const options = all_args[1] as ToolRenderResultOptions;
 	const theme = all_args[2] as Theme;
@@ -79,7 +109,7 @@ export const render_result = (...all_args: unknown[]): Text => {
 	const last_component = context?.lastComponent;
 	const action = typeof args.action === "string" ? args.action : "";
 	const content_text = extract_text(result);
-	const text = last_component ?? new Text("", 0, 0);
+	const text = last_component ?? new RenderText();
 
 	if (action.length > 0 && UNSUPPORTED[action] !== undefined) {
 		text.setText(
