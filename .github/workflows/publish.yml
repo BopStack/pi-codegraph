@@ -54,9 +54,23 @@ jobs:
           fi
 
       - name: Publish (dry run)
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'true'
         run: pnpm publish --dry-run --access public
 
-      - name: Publish (provenance)
+      - name: Publish (workflow_dispatch live)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'false'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          pnpm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
+          pnpm publish --access public --no-git-checks
+
+      - name: Publish (push tag)
         if: github.event_name == 'push'
-        run: pnpm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          pnpm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
+          pnpm publish --access public --no-git-checks
