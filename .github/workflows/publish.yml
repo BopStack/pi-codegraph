@@ -61,4 +61,10 @@ jobs:
 
       - name: Stage release for maintainer approval
         if: github.event_name == 'push' || !inputs.dry_run
-        run: npm stage publish --access public
+        run: |
+          if [[ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" || -z "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]]; then
+            echo "::error::GitHub Actions did not provide OIDC request credentials"
+            exit 1
+          fi
+          echo "GitHub Actions OIDC request credentials are available"
+          npm stage publish --access public --loglevel=verbose
